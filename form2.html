@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dyatlov Pass: Form Production Drill</title>
+<style>
+  :root {
+    --bg-dark: #121824;
+    --panel-bg: #1e2530;
+    --accent-blue: #38bdf8;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --correct-green: #22c55e;
+    --wrong-red: #ef4444;
+    --accent-gold: #fbbf24;
+    --evidence-bg: #0f1a24;
+    --evidence-border: #7fb2e5;
+    --evidence-text: #7dd3fc;
+    --slot-bg: #0c141d;
+    --slot-border: #24354a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  .game-container {
+    width: 100%;
+    max-width: 950px;
+    background: var(--panel-bg);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    padding: 30px;
+    border: 1px solid #2e3748;
+    position: relative;
+  }
+
+  /* ---------- HUD ---------- */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    border-bottom: 2px solid #2e3748;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+  }
+  .title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--accent-blue);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .stats {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    align-items: center;
+  }
+  .stats b { color: var(--text-main); }
+  .lamps { display: flex; gap: 4px; align-items: center; }
+  .lamp {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: #243244; transition: .3s;
+  }
+  .lamp.on {
+    background: var(--accent-gold);
+    box-shadow: 0 0 9px rgba(251, 191, 36, .9);
+  }
+
+  .progress {
+    height: 3px;
+    background: #131c26;
+    margin-bottom: 25px;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress .fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #3f6d99, var(--accent-blue), #7dd3fc);
+    box-shadow: 0 0 14px rgba(56, 189, 248, .7);
+    transition: width .45s cubic-bezier(.4,0,.2,1);
+    border-radius: 2px;
+  }
+
+  /* ---------- EVIDENCE CARD ---------- */
+  .evidence-card {
+    background-color: var(--evidence-bg);
+    border: 2px solid var(--evidence-border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 0 20px rgba(127, 178, 229, 0.15);
+    position: relative;
+  }
+  .evidence-header {
+    display: inline-block;
+    background-color: var(--evidence-border);
+    color: #0a141f;
+    padding: 8px 15px;
+    border-radius: 6px;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    margin-top: -35px;
+    margin-bottom: 15px;
+  }
+  .evidence-context {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: var(--evidence-text);
+    margin-bottom: 15px;
+    font-style: italic;
+  }
+  .target-sentence {
+    font-size: 1.15rem;
+    line-height: 1.8;
+    color: #f8fafc;
+    background: #0a141d;
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px dashed rgba(127, 178, 229, 0.4);
+    font-family: 'Courier New', Courier, monospace;
+  }
+  .target-sentence .fixed { color: #94a3b8; }
+  .target-sentence .modal { color: var(--accent-gold); font-weight: bold; }
+  .target-sentence .slot-marker {
+    display: inline-block;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.8rem;
+    color: #4d5f73;
+    border: 1px dashed #2a3a4d;
+    border-radius: 5px;
+    padding: 1px 7px;
+    margin: 0 3px;
+    vertical-align: middle;
+  }
+  .target-sentence .slot-marker.done {
+    color: var(--correct-green);
+    border-color: var(--correct-green);
+    border-style: solid;
+  }
+
+  /* STRUCTURE LINE — hidden until correct answer */
+  .structure-line {
+    display: none;
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: #0a141d;
+    border: 1px solid #1e2b3a;
+    border-radius: 6px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.82rem;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    line-height: 1.6;
+    animation: pop .35s ease;
+  }
+  .structure-line.reveal { display: flex; }
+  .structure-line.q-struct { border-color: #2a3a4d; background: #0c1826; }
+  .structure-label {
+    font-size: 0.58rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent-blue);
+    background: #111c28;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid #1e2b3a;
+    font-weight: bold;
+    white-space: nowrap;
+  }
+  .structure-formula { color: var(--text-muted); }
+  .s-modal { color: var(--accent-gold); font-weight: bold; }
+  .s-aux   { color: var(--accent-blue); }
+  .s-verb  { color: var(--correct-green); font-weight: bold; }
+
+  /* ---------- BUILDER GRID ---------- */
+  .builder-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+  .slot {
+    background: var(--slot-bg);
+    border: 1.5px dashed var(--slot-border);
+    border-radius: 10px;
+    padding: 10px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .slot.filled { border-style: solid; border-color: #2f4a66; background: #0e1826; }
+  .slot.ok { border-color: var(--correct-green); background: rgba(34, 197, 94, 0.07); }
+  .slot.err { border-color: var(--wrong-red); background: rgba(239, 68, 68, 0.07); }
+
+  .slot-head { margin-bottom: 8px; }
+  .slot-name {
+    display: block;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent-blue);
+    margin-bottom: 3px;
+  }
+  .slot-def { display: block; font-size: 0.65rem; color: var(--text-muted); line-height: 1.3; }
+
+  .chips { display: flex; flex-direction: column; gap: 5px; }
+  .chip {
+    display: flex; flex-direction: column; gap: 2px;
+    width: 100%; text-align: left;
+    padding: 6px 8px;
+    background: #2d3748;
+    border: 1.5px solid #4a5568;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text-main);
+    transition: border-color 0.15s, background 0.15s, transform 0.12s;
+    font-family: inherit;
+  }
+  .chip:hover:not(:disabled) {
+    border-color: var(--accent-blue);
+    background: #3a4659;
+    transform: translateX(3px);
+  }
+  .chip:disabled { cursor: not-allowed; }
+  .chip .c-form {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9rem;
+    color: #f1c40f;
+    font-weight: bold;
+  }
+  .chip .c-def { font-size: 0.6rem; color: var(--text-muted); line-height: 1.2; }
+  .chip.sel {
+    border-color: var(--accent-gold);
+    background: rgba(251, 191, 36, 0.1);
+    box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.3) inset;
+  }
+  .chip.sel .c-form { color: var(--accent-gold); }
+  .chip.key-ok { border-color: var(--correct-green); background: rgba(34, 197, 94, 0.15); }
+  .chip.key-ok .c-form { color: var(--correct-green); }
+  .chip.dim { opacity: 0.3; }
+
+  /* ---------- PREVIEW ---------- */
+  .preview {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+    padding: 12px 15px;
+    margin: 15px 0;
+    background: #0a1119;
+    border: 1px solid #1a2532;
+    border-radius: 8px;
+  }
+  .preview .pv-label {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-right: 6px;
+  }
+  .pv-part {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9rem;
+    color: var(--accent-blue);
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: #111c28;
+    border: 1px solid #1e2b3a;
+  }
+  .pv-part.empty { color: #3d4d5e; border-style: dashed; background: transparent; }
+  .pv-part.given { color: var(--accent-gold); border-color: #4a3b1a; background: #1a1408; }
+
+  /* ---------- FEEDBACK ---------- */
+  .feedback {
+    display: none;
+    margin-top: 15px;
+    padding: 15px 18px;
+    border-radius: 8px;
+    border: 1px solid;
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+  .feedback.show { display: block; }
+  .feedback.good { border-color: rgba(34, 197, 94, 0.5); background: rgba(34, 197, 94, 0.07); }
+  .feedback.bad { border-color: rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.07); }
+  .feedback .verdict {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 10px;
+  }
+  .feedback.good .verdict { color: var(--correct-green); }
+  .feedback.bad .verdict { color: var(--wrong-red); }
+  .feedback ul { margin: 8px 0 0 18px; padding: 0; }
+  .feedback li { margin-bottom: 12px; }
+  .feedback li:last-child { margin-bottom: 0; }
+  .feedback .slot-tag {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent-gold);
+  }
+  .feedback .formula {
+    display: block;
+    margin-top: 15px;
+    padding-top: 12px;
+    border-top: 1px dashed #22303f;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9rem;
+    color: var(--accent-gold);
+  }
+  .feedback .formula .sentence {
+    display: block;
+    color: var(--accent-gold);
+    margin-bottom: 10px;
+  }
+
+  /* ---------- QUESTION PANEL ---------- */
+  .q-panel {
+    display: none;
+    margin-top: 20px;
+    padding: 15px;
+    background: var(--slot-bg);
+    border: 1.5px solid var(--slot-border);
+    border-radius: 10px;
+  }
+  .q-panel.show { display: block; animation: pop 0.35s ease; }
+
+  @keyframes pop {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .q-header {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.75rem;
+    font-weight: bold;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent-blue);
+    margin-bottom: 10px;
+  }
+  .q-task {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+    font-style: italic;
+  }
+  .q-options { display: flex; flex-direction: column; gap: 8px; }
+  .q-opt {
+    display: flex; align-items: flex-start; gap: 12px;
+    width: 100%;
+    padding: 10px 12px;
+    text-align: left;
+    background: #2d3748;
+    border: 1.5px solid #4a5568;
+    border-radius: 8px;
+    color: var(--text-main);
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, transform 0.12s;
+  }
+  .q-opt:hover:not(:disabled) {
+    border-color: var(--accent-blue);
+    background: #3a4659;
+    transform: translateX(3px);
+  }
+  .q-opt:disabled { cursor: not-allowed; }
+  .q-opt .q-key {
+    flex: 0 0 26px;
+    height: 26px;
+    display: grid; place-items: center;
+    border-radius: 6px;
+    background: #0a1119;
+    border: 1px solid #2a3a4d;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 1px;
+    font-weight: bold;
+  }
+  .q-opt.correct {
+    border-color: var(--correct-green);
+    background: rgba(34, 197, 94, 0.12);
+    transform: translateX(3px);
+  }
+  .q-opt.correct .q-key {
+    background: var(--correct-green);
+    color: #06140c;
+    border-color: var(--correct-green);
+  }
+  .q-opt.wrong {
+    border-color: var(--wrong-red);
+    background: rgba(239, 68, 68, 0.1);
+    opacity: 0.55;
+    text-decoration: line-through;
+    text-decoration-color: rgba(239, 68, 68, 0.5);
+  }
+  .q-opt.wrong .q-key {
+    background: var(--wrong-red);
+    color: #1a0509;
+    border-color: var(--wrong-red);
+  }
+
+  .q-feedback {
+    display: none;
+    margin-top: 15px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+  .q-feedback.show { display: block; }
+  .q-feedback.good {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.4);
+    color: #4ade80;
+  }
+  .q-feedback.bad {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+  }
+
+  /* ---------- FOOTER ---------- */
+  .footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 25px;
+  }
+  .btn-action {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: bold;
+    padding: 14px 24px;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(135deg, var(--accent-blue), #7dd3fc);
+    color: #0f172a;
+    cursor: pointer;
+    transition: 0.2s;
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+  }
+  .btn-action:hover { box-shadow: 0 0 30px rgba(56, 189, 248, 0.5); }
+  .btn-action:disabled {
+    background: #1a2634;
+    color: #4d5f73;
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  .shake { animation: shake 0.4s; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-5px); }
+    80% { transform: translateX(5px); }
+  }
+
+  /* ---------- END SCREEN ---------- */
+  .end-screen { display: none; text-align: center; padding: 40px; }
+  .end-screen h2 {
+    color: var(--correct-green);
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+  }
+  .end-screen .rank {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1.25rem;
+    letter-spacing: 0.08em;
+    color: var(--accent-gold);
+    margin: 10px 0 16px;
+  }
+  .end-screen .score-num {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: var(--accent-gold);
+    margin: 15px 0;
+    font-family: 'Courier New', Courier, monospace;
+  }
+  .end-screen .tally {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 700px) {
+    .builder-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+  }
+  @media (max-width: 500px) {
+    .builder-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="game-container">
+  <div id="game-panel">
+    <div class="header">
+      <div class="title">Case File: Form Production</div>
+      <div class="stats">
+        <span>Evidence <b id="stage-num">1</b>/<b id="stage-total">6</b></span>
+        <span>Score <b id="score-display">0</b></span>
+        <span class="lamps" id="lamps"></span>
+      </div>
+    </div>
+
+    <div class="progress"><div class="fill" id="prog-fill"></div></div>
+
+    <!-- EVIDENCE CARD -->
+    <div class="evidence-card">
+      <div class="evidence-header">🔍 Evidence</div>
+      <div class="evidence-context" id="context-text"></div>
+      <div class="target-sentence" id="sentence-text"></div>
+
+      <!-- STRUCTURE LINE — hidden until correct build -->
+      <div class="structure-line" id="structure-line">
+        <span class="structure-label">Statement structure</span>
+        <span class="structure-formula" id="structure-text"></span>
+      </div>
+    </div>
+
+    <!-- BUILDER GRID -->
+    <div class="builder-grid" id="builder"></div>
+
+    <!-- PREVIEW -->
+    <div class="preview">
+      <span class="pv-label">Your build</span>
+      <span id="preview-parts"></span>
+    </div>
+
+    <!-- FEEDBACK -->
+    <div class="feedback" id="feedback"></div>
+
+    <!-- QUESTION PANEL -->
+    <div class="q-panel" id="q-panel">
+      <div class="q-header">❓ Choose the right question</div>
+      <div class="q-task" id="q-task">Select the correct question form for this statement.</div>
+      <div class="q-options" id="q-options"></div>
+      <div class="q-feedback" id="q-feedback"></div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+      <button id="check-button" class="btn-action">Check Build</button>
+      <button id="next-button" class="btn-action" style="display: none;">Next Evidence ▶</button>
+    </div>
+  </div>
+
+  <!-- END SCREEN -->
+  <div id="end-screen" class="end-screen">
+    <div class="title" id="end-kicker" style="margin-bottom: 10px;">Investigation Complete</div>
+    <h2 id="end-title">All Evidence Logged</h2>
+    <div class="rank" id="rank-text">—</div>
+    <div class="score-num" id="final-score">0</div>
+    <div class="tally" id="tally-text"></div>
+    <p id="evaluation-text" style="color: var(--text-muted); margin-bottom: 25px;"></p>
+    <button id="restart-button" class="btn-action" style="display: block; margin: 0 auto;">Restart Case Review</button>
+  </div>
+</div>
+
+<script>
+/* =================================================================
+   DATASET
+   ================================================================= */
+const dataset = [
+  {
+    context: "The slope was too gentle, and the tent was found still standing.",
+    target: "They can't have had to have abandoned the tent because of an avalanche.",
+    display: { subject: "They", modal: "can't", tail: "the tent because of an avalanche." },
+    build: { aux1: "have", obligation: "had to", aux2: "have", verb: "v3" },
+    verbs: { v1: "abandon", v3: "abandoned", ving: "abandoning" },
+    reason: "This is the <b>Past Modal + Perfect (Double Past Marking)</b> form.",
+    structure: `Subject + <span class="s-modal">can't</span> + <span class="s-aux">have</span> + <span class="s-aux">had to</span> + <span class="s-aux">have</span> + <span class="s-verb">V3</span> + object`,
+    slotExplanations: {
+      0: "The perfect auxiliary after a modal is always the bare form <b>have</b>.",
+      1: "The past obligation marker <b>had to</b> is required to express that a necessity existed in the past.",
+      2: "The second perfect auxiliary is also the bare form <b>have</b>, introducing the earlier completed action.",
+      3: "The lexical verb must be in its past participle form <b>V3</b> (<i>abandoned</i>)."
+    },
+    questionForm: {
+      task: "Which is the correct question form of this statement?",
+      correct: "Why can't they have had to have abandoned the tent because of an avalanche?",
+      structure: `Wh-word + <span class="s-modal">can't</span> + Subject + <span class="s-aux">have</span> + <span class="s-aux">had to</span> + <span class="s-aux">have</span> + <span class="s-verb">V3</span> + object?`,
+      options: [
+        "Why can't they have had to have abandoned the tent because of an avalanche?",
+        "Why do they can't have had to have abandoned the tent because of an avalanche?",
+        "Why can't have they had to have abandoned the tent because of an avalanche?"
+      ],
+      explanations: {
+        "Why can't they have had to have abandoned the tent because of an avalanche?": "✓ Correct. The modal <i>can't</i> is the operator and moves in front of the subject.",
+        "Why do they can't have had to have abandoned the tent because of an avalanche?": "✕ <b>DO-support cannot co-occur with a modal.</b>",
+        "Why can't have they had to have abandoned the tent because of an avalanche?": "✕ <b>HAVE must not cross the subject.</b>"
+      }
+    }
+  },
+  {
+    context: "The search team found only nine pairs of footprints leading away from the tent.",
+    target: "They can't have been being followed down the slope.",
+    display: { subject: "They", modal: "can't", tail: "down the slope." },
+    build: { aux1: "have", obligation: "none", aux2: "been being", verb: "v3" },
+    verbs: { v1: "follow", v3: "followed", ving: "following" },
+    reason: "This is the <b>Past Modal + Perfect Continuous Passive</b> form.",
+    structure: `Subject + <span class="s-modal">can't</span> + <span class="s-aux">have</span> + <span class="s-aux">been</span> + <span class="s-aux">being</span> + <span class="s-verb">V3</span> + adverbial`,
+    slotExplanations: {
+      0: "The bare form <b>have</b> is required after the modal.",
+      1: "There is no obligation marker here. The slot must be <b>empty (∅)</b>.",
+      2: "The compound marker <b>been being</b> is required.",
+      3: "The lexical verb must be the past participle <b>V3</b> (<i>followed</i>)."
+    },
+    questionForm: {
+      task: "Which is the correct question form of this statement?",
+      correct: "Who can't they have been being followed by?",
+      structure: `Wh-word + <span class="s-modal">can't</span> + Subject + <span class="s-aux">have</span> + <span class="s-aux">been</span> + <span class="s-aux">being</span> + <span class="s-verb">V3</span> + preposition?`,
+      options: [
+        "Who can't they have been being followed by?",
+        "Who do they can't have been being followed by?",
+        "Who can't have they been being followed by?"
+      ],
+      explanations: {
+        "Who can't they have been being followed by?": "✓ Correct. The wh-word fronts, then the modal operator (<i>can't</i>) inverts with the subject.",
+        "Who do they can't have been being followed by?": "✕ <b>DO-support cannot co-occur with a modal.</b>",
+        "Who can't have they been being followed by?": "✕ <b>HAVE must not cross the subject.</b>"
+      }
+    }
+  },
+  {
+    context: "The normal entrance was blocked, jammed, or unusable.",
+    target: "They must have had to have cut through the tent from the inside.",
+    display: { subject: "They", modal: "must", tail: "through the tent from the inside." },
+    build: { aux1: "have", obligation: "had to", aux2: "have", verb: "v3" },
+    verbs: { v1: "cut", v3: "cut", ving: "cutting" },
+    reason: "This is the <b>Past Modal + Perfect (Double Past Marking)</b> form.",
+    structure: `Subject + <span class="s-modal">must</span> + <span class="s-aux">have</span> + <span class="s-aux">had to</span> + <span class="s-aux">have</span> + <span class="s-verb">V3</span> + adverbial`,
+    slotExplanations: {
+      0: "The bare form <b>have</b> is required after the modal.",
+      1: "The past obligation marker <b>had to</b> is required.",
+      2: "The second perfect auxiliary is also the bare form <b>have</b>.",
+      3: "The lexical verb must be the past participle <b>V3</b> (<i>cut</i>)."
+    },
+    questionForm: {
+      task: "Which is the correct question form of this statement?",
+      correct: "They must have had to have cut through the tent from the inside, mustn't they?",
+      structure: `Subject + <span class="s-modal">must</span> + <span class="s-aux">have</span> + <span class="s-aux">had to</span> + <span class="s-aux">have</span> + <span class="s-verb">V3</span> + ..., <span class="s-modal">mustn't</span> + pronoun?`,
+      options: [
+        "They must have had to have cut through the tent from the inside, mustn't they?",
+        "They must have had to have cut through the tent from the inside, don't they?",
+        "They must have had to have cut through the tent from the inside, haven't they?"
+      ],
+      explanations: {
+        "They must have had to have cut through the tent from the inside, mustn't they?": "✓ Correct. A tag repeats the operator of the main clause — here the modal <i>must</i> — with reversed polarity.",
+        "They must have had to have cut through the tent from the inside, don't they?": "✕ <b>DO is not the operator.</b>",
+        "They must have had to have cut through the tent from the inside, haven't they?": "✕ <b>HAVE is not the operator.</b>"
+      }
+    }
+  },
+  {
+    context: "They ran into -30°C half-dressed.",
+    target: "They must have been being driven out by something they believed was inside the tent.",
+    display: { subject: "They", modal: "must", tail: "out by something they believed was inside the tent." },
+    build: { aux1: "have", obligation: "none", aux2: "been being", verb: "v3" },
+    verbs: { v1: "drive", v3: "driven", ving: "driving" },
+    reason: "This is the <b>Past Modal + Perfect Continuous Passive</b> form.",
+    structure: `Subject + <span class="s-modal">must</span> + <span class="s-aux">have</span> + <span class="s-aux">been</span> + <span class="s-aux">being</span> + <span class="s-verb">V3</span> + particle + by + agent`,
+    slotExplanations: {
+      0: "The bare form <b>have</b> is required after the modal.",
+      1: "There is no obligation marker here. The slot must be <b>empty (∅)</b>.",
+      2: "The compound marker <b>been being</b> is required.",
+      3: "The lexical verb must be the past participle <b>V3</b> (<i>driven</i>)."
+    },
+    questionForm: {
+      task: "Which is the correct question form of this statement?",
+      correct: "Mustn't they have been being driven out by something inside the tent?",
+      structure: `<span class="s-modal">Mustn't</span> + Subject + <span class="s-aux">have</span> + <span class="s-aux">been</span> + <span class="s-aux">being</span> + <span class="s-verb">V3</span> + particle + by + agent?`,
+      options: [
+        "Mustn't they have been being driven out by something inside the tent?",
+        "Don't they must have been being driven out by something inside the tent?",
+        "Mustn't have they been being driven out by something inside the tent?"
+      ],
+      explanations: {
+        "Mustn't they have been being driven out by something inside the tent?": "✓ Correct. The contracted negative modal (<i>mustn't</i>) fronts the subject as one unit.",
+        "Don't they must have been being driven out by something inside the tent?": "✕ <b>DO-support cannot co-occur with a modal.</b>",
+        "Mustn't have they been being driven out by something inside the tent?": "✕ <b>HAVE must not cross the subject.</b>"
+      }
+    }
+  },
+  {
+    context: "There were signs they wanted to escape something on the ground rather than simply look for the tent.",
+    target: "They might have had to have climbed the cedar tree to escape something on the ground.",
+    display: { subject: "They", modal: "might", tail: "the cedar tree to escape something on the ground." },
+    build: { aux1: "have", obligation: "had to", aux2: "have", verb: "v3" },
+    verbs: { v1: "climb", v3: "climbed", ving: "climbing" },
+    reason: "This is the <b>Past Modal + Perfect (Double Past Marking)</b> form.",
+    structure: `Subject + <span class="s-modal">might</span> + <span class="s-aux">have</span> + <span class="s-aux">had to</span> + <span class="s-aux">have</span> + <span class="s-verb">V3</span> + object`,
+    slotExplanations: {
+      0: "The bare form <b>have</b> is required after the modal.",
+      1: "The past obligation marker <b>had to</b> is required.",
+      2: "The second perfect auxiliary is also the bare form <b>have</b>.",
+      3: "The lexical verb must be the past participle <b>V3</b> (<i>climbed</i>)."
+    },
+    questionForm: {
+      task: "Which is the correct question form of this statement?",
+      correct: "Might they have had to have climbed the cedar tree to escape something?",
+      structure: `<span class="s-modal">Might</span> + Subject + <span class="s-aux">have</span> + <span class="s-aux">had to</span> + <span class="s-aux">have</span> + <span class="s-verb">V3</span> + object?`,
+      options: [
+        "Might they have had to have climbed the cedar tree to escape something?",
+        "Do they might have had to have climbed the cedar tree to escape something?",
+        "Might have they had to have climbed the cedar tree to escape something?"
+      ],
+      explanations: {
+        "Might they have had to have climbed the cedar tree to escape something?": "✓ Correct. The modal <i>might</i> fronts the subject.",
+        "Do they might have had to have climbed the cedar tree to escape something?": "✕ <b>DO-support cannot co-occur with a modal.</b>",
+        "Might have they had to have climbed the cedar tree to escape something?": "✕ <b>HAVE must not cross the subject.</b>"
+      }
+    }
+  },
+  {
+    context: "Someone climbed the cedar and broke branches up to five metres high.",
+    target: "They might have been being observed from the treeline.",
+    display: { subject: "They", modal: "might", tail: "from the treeline." },
+    build: { aux1: "have", obligation: "none", aux2: "been being", verb: "v3" },
+    verbs: { v1: "observe", v3: "observed", ving: "observing" },
+    reason: "This is the <b>Past Modal + Perfect Continuous Passive</b> form.",
+    structure: `Subject + <span class="s-modal">might</span> + <span class="s-aux">have</span> + <span class="s-aux">been</span> + <span class="s-aux">being</span> + <span class="s-verb">V3</span> + adverbial`,
+    slotExplanations: {
+      0: "The bare form <b>have</b> is required after the modal.",
+      1: "There is no obligation marker here. The slot must be <b>empty (∅)</b>.",
+      2: "The compound marker <b>been being</b> is required.",
+      3: "The lexical verb must be the past participle <b>V3</b> (<i>observed</i>)."
+    },
+    questionForm: {
+      task: "Which is the correct question form of this statement?",
+      correct: "Where might they have been being observed from?",
+      structure: `Wh-word + <span class="s-modal">might</span> + Subject + <span class="s-aux">have</span> + <span class="s-aux">been</span> + <span class="s-aux">being</span> + <span class="s-verb">V3</span> + preposition?`,
+      options: [
+        "Where might they have been being observed from?",
+        "Where do they might have been being observed from?",
+        "Where might have they been being observed from?"
+      ],
+      explanations: {
+        "Where might they have been being observed from?": "✓ Correct. The wh-word fronts, then the modal operator (<i>might</i>) inverts with the subject.",
+        "Where do they might have been being observed from?": "✕ <b>DO-support cannot co-occur with a modal.</b>",
+        "Where might have they been being observed from?": "✕ <b>HAVE must not cross the subject.</b>"
+      }
+    }
+  }
+];
+
+/* =================================================================
+   SLOT DEFINITIONS
+   ================================================================= */
+function buildSlots(s) {
+  return [
+    {
+      name: "SLOT 1 · PERFECT AUXILIARY",
+      def: "the auxiliary that carries the perfect",
+      opts: [
+        { id: "have", form: "have", def: "bare form of HAVE" },
+        { id: "has", form: "has", def: "3rd person singular present of HAVE" },
+        { id: "had", form: "had", def: "past-tense form of HAVE" },
+        { id: "be", form: "be", def: "infinitive of BE" },
+        { id: "none", form: "∅", def: "no auxiliary" }
+      ]
+    },
+    {
+      name: "SLOT 2 · OBLIGATION",
+      def: "the marker of past necessity",
+      opts: [
+        { id: "none", form: "∅", def: "no obligation marker" },
+        { id: "had to", form: "had to", def: "past obligation" },
+        { id: "have to", form: "have to", def: "present obligation" },
+        { id: "must", form: "must", def: "modal of obligation" }
+      ]
+    },
+    {
+      name: "SLOT 3 · PERFECT AUXILIARY / VOICE",
+      def: "the second perfect auxiliary or passive/continuous marker",
+      opts: [
+        { id: "have", form: "have", def: "bare form of HAVE" },
+        { id: "has", form: "has", def: "3rd person singular present of HAVE" },
+        { id: "had", form: "had", def: "past-tense form of HAVE" },
+        { id: "been", form: "been", def: "past participle of BE" },
+        { id: "been being", form: "been being", def: "past participle + present participle of BE" },
+        { id: "none", form: "∅", def: "no auxiliary" }
+      ]
+    },
+    {
+      name: "SLOT 4 · LEXICAL VERB",
+      def: "the main verb — form determined by what precedes it",
+      opts: [
+        { id: "v1", form: s.verbs.v1, def: "V1 · base form" },
+        { id: "v3", form: s.verbs.v3, def: "V3 · past participle" },
+        { id: "ving", form: s.verbs.ving, def: "V-ing · present participle" }
+      ]
+    }
+  ];
+}
+
+/* =================================================================
+   STATE
+   ================================================================= */
+const MAX_LAMPS = 9;
+let index = 0;
+let score = 0;
+let lamps = MAX_LAMPS;
+let selection = [null, null, null, null];
+let slots = [];
+let buildAttempts = 0;
+let questionAttempts = 0;
+let buildDone = false;
+let qFormDone = false;
+let gameOverFlag = false;
+
+/* =================================================================
+   DOM
+   ================================================================= */
+const contextEl     = document.getElementById('context-text');
+const sentenceEl    = document.getElementById('sentence-text');
+const structureLine = document.getElementById('structure-line');
+const structureEl   = document.getElementById('structure-text');
+const builderEl     = document.getElementById('builder');
+const previewPartsEl= document.getElementById('preview-parts');
+const feedbackEl    = document.getElementById('feedback');
+const checkBtn      = document.getElementById('check-button');
+const nextBtn       = document.getElementById('next-button');
+const stageNumEl    = document.getElementById('stage-num');
+const stageTotalEl  = document.getElementById('stage-total');
+const scoreEl       = document.getElementById('score-display');
+const lampsEl       = document.getElementById('lamps');
+const progFill      = document.getElementById('prog-fill');
+const gamePanel     = document.getElementById('game-panel');
+const endScreen     = document.getElementById('end-screen');
+const endKicker     = document.getElementById('end-kicker');
+const endTitle      = document.getElementById('end-title');
+const rankText      = document.getElementById('rank-text');
+const finalScoreEl  = document.getElementById('final-score');
+const tallyText     = document.getElementById('tally-text');
+const evalTextEl    = document.getElementById('evaluation-text');
+const restartBtn    = document.getElementById('restart-button');
+const qPanel        = document.getElementById('q-panel');
+const qTask         = document.getElementById('q-task');
+const qOptions      = document.getElementById('q-options');
+const qFeedback     = document.getElementById('q-feedback');
+
+/* =================================================================
+   HELPERS
+   ================================================================= */
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function updateHud() {
+  scoreEl.textContent = score;
+  stageNumEl.textContent = Math.min(index + 1, dataset.length);
+
+  let html = "";
+  for (let i = 0; i < MAX_LAMPS; i++) {
+    html += `<span class="lamp${i < lamps ? " on" : ""}"></span>`;
+  }
+  lampsEl.innerHTML = html;
+
+  let units = index * 2;
+  if (buildDone) units += 1;
+  if (qFormDone) units += 1;
+  progFill.style.width = (units / (dataset.length * 2) * 100) + "%";
+}
+
+function rankFor(points) {
+  if (points >= 1350) return "SENIOR STRUCTURAL ANALYST";
+  if (points >= 1100) return "FIELD ANALYST";
+  if (points >= 850)  return "ASSISTANT ANALYST";
+  if (points >= 600)  return "JUNIOR ANALYST";
+  return "TRAINEE";
+}
+
+/* =================================================================
+   RENDER STAGE
+   ================================================================= */
+function renderStage() {
+  const current = dataset[index];
+  buildAttempts = 0;
+  questionAttempts = 0;
+  buildDone = false;
+  qFormDone = false;
+  selection = [null, null, null, null];
+  slots = buildSlots(current);
+
+  contextEl.textContent = current.context;
+
+  // Structure line hidden until correct build
+  structureLine.classList.remove("reveal");
+  structureEl.innerHTML = current.structure;
+
+  const d = current.display;
+  sentenceEl.innerHTML = `
+    <span class="fixed">${d.subject}</span>
+    <span class="modal">${d.modal}</span>
+    <span class="slot-marker" id="mk0">1</span>
+    <span class="slot-marker" id="mk1">2</span>
+    <span class="slot-marker" id="mk2">3</span>
+    <span class="slot-marker" id="mk3">4</span>
+    <span class="fixed">${d.tail}</span>
+  `;
+
+  builderEl.innerHTML = "";
+  slots.forEach((slot, si) => {
+    const div = document.createElement("div");
+    div.className = "slot";
+    div.id = "slot" + si;
+
+    const head = document.createElement("div");
+    head.className = "slot-head";
+    head.innerHTML = `<span class="slot-name">${slot.name}</span><span class="slot-def">${slot.def}</span>`;
+    div.appendChild(head);
+
+    const chips = document.createElement("div");
+    chips.className = "chips";
+    shuffle(slot.opts).forEach(opt => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip";
+      b.dataset.id = opt.id;
+      b.dataset.slot = si;
+      b.innerHTML = `<span class="c-form">${opt.form}</span><span class="c-def">${opt.def}</span>`;
+      b.addEventListener("click", () => selectChip(si, opt.id, b));
+      chips.appendChild(b);
+    });
+    div.appendChild(chips);
+    builderEl.appendChild(div);
+  });
+
+  checkBtn.style.display = "inline-block";
+  checkBtn.disabled = false;
+  nextBtn.style.display = "none";
+
+  feedbackEl.className = "feedback";
+  feedbackEl.innerHTML = "";
+  qPanel.classList.remove("show");
+  qOptions.innerHTML = "";
+  qFeedback.className = "q-feedback";
+  qFeedback.innerHTML = "";
+
+  renderPreview();
+  updateHud();
+}
+
+function selectChip(slotIndex, optId, btn) {
+  if (buildDone || gameOverFlag) return;
+  selection[slotIndex] = optId;
+
+  const slotEl = document.getElementById("slot" + slotIndex);
+  slotEl.querySelectorAll(".chip").forEach(c => c.classList.remove("sel"));
+  btn.classList.add("sel");
+  slotEl.classList.add("filled");
+
+  const mk = document.getElementById("mk" + slotIndex);
+  if (mk) mk.classList.add("done");
+
+  renderPreview();
+}
+
+function renderPreview() {
+  const current = dataset[index];
+  const html = [];
+  const d = current.display;
+
+  html.push(`<span class="pv-part given">${d.modal}</span>`);
+
+  slots.forEach((slot, si) => {
+    const chosen = selection[si];
+    if (chosen === null) {
+      html.push(`<span class="pv-part empty">[ ${slot.name.split("· ")[1]} ]</span>`);
+      return;
+    }
+    if (chosen === "none") {
+      html.push(`<span class="pv-part empty">∅</span>`);
+    } else {
+      const opt = slot.opts.find(o => o.id === chosen);
+      html.push(`<span class="pv-part">${opt.form}</span>`);
+    }
+  });
+
+  previewPartsEl.innerHTML = html.join(" ");
+}
+
+/* =================================================================
+   CHECK BUILD
+   ================================================================= */
+checkBtn.addEventListener("click", () => {
+  if (buildDone || gameOverFlag) return;
+
+  const current = dataset[index];
+  const target = [
+    current.build.aux1,
+    current.build.obligation,
+    current.build.aux2,
+    current.build.verb
+  ];
+
+  if (selection.includes(null)) {
+    feedbackEl.className = "feedback show bad";
+    feedbackEl.innerHTML = `<span class="verdict">Incomplete</span>Every slot must be filled before the build can be checked.`;
+    return;
+  }
+
+  const correct = selection.every((v, i) => v === target[i]);
+
+  if (correct) {
+    buildDone = true;
+
+    slots.forEach((slot, si) => {
+      document.getElementById("slot" + si).classList.add("ok");
+      const btn = document.querySelector(`#slot${si} .chip[data-id="${selection[si]}"]`);
+      if (btn) btn.classList.add("key-ok");
+    });
+
+    document.querySelectorAll(".chip").forEach(c => {
+      c.disabled = true;
+      if (!c.classList.contains("key-ok")) c.classList.add("dim");
+    });
+
+    // Reveal the statement structure now that the build is correct
+    structureEl.innerHTML = current.structure;
+    structureLine.classList.add("reveal");
+
+    const gain = buildAttempts === 0 ? 150 : buildAttempts === 1 ? 90 : 40;
+    score += gain;
+    updateHud();
+
+    feedbackEl.className = "feedback show good";
+    feedbackEl.innerHTML = `
+      <span class="verdict">✓ Verb phrase correct · +${gain} pts</span>
+      ${current.reason}
+      <span class="formula">
+        <span class="sentence">${current.target}</span>
+        <span style="display:block; font-size:0.6rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--accent-blue); margin-bottom:4px;">Structure</span>
+        ${current.structure}
+      </span>
+    `;
+
+    checkBtn.style.display = "none";
+    setTimeout(() => openQuestionForm(), 400);
+
+  } else {
+    buildAttempts++;
+    lamps--;
+    updateHud();
+
+    const problems = [];
+    slots.forEach((slot, si) => {
+      const slotEl = document.getElementById("slot" + si);
+      const ok = selection[si] === target[si];
+      slotEl.classList.remove("ok", "err");
+      slotEl.classList.add(ok ? "ok" : "err");
+
+      if (!ok) {
+        const chosenOpt = slot.opts.find(o => o.id === selection[si]);
+        problems.push(
+          `<li><span class="slot-tag">Slot ${si + 1} · ${slot.name.split("· ")[1]}</span><br>` +
+          `You chose <b>${chosenOpt.form}</b> (${chosenOpt.def}).<br>` +
+          `${current.slotExplanations[si]}</li>`
+        );
+      }
+    });
+
+    feedbackEl.className = "feedback show bad";
+    feedbackEl.innerHTML = `
+      <span class="verdict">✕ Verb phrase incorrect · −1 lamp</span>
+      <ul>${problems.join("")}</ul>
+    `;
+
+    const panel = document.querySelector(".game-container");
+    panel.classList.add("shake");
+    setTimeout(() => panel.classList.remove("shake"), 420);
+
+    if (lamps <= 0) setTimeout(gameOver, 1200);
+  }
+});
+
+/* =================================================================
+   CHOOSE THE RIGHT QUESTION
+   ================================================================= */
+function openQuestionForm() {
+  const current = dataset[index];
+  const qf = current.questionForm;
+
+  qTask.textContent = qf.task;
+  qOptions.innerHTML = "";
+  qFeedback.className = "q-feedback";
+  qFeedback.innerHTML = "";
+
+  shuffle(qf.options).forEach((opt, i) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "q-opt";
+    b.dataset.opt = opt;
+    b.innerHTML = `<span class="q-key">${i + 1}</span><span>${opt}</span>`;
+    b.addEventListener("click", () => chooseQuestionForm(opt, b));
+    qOptions.appendChild(b);
+  });
+
+  qPanel.classList.add("show");
+  qPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function chooseQuestionForm(opt, btn) {
+  if (qFormDone || gameOverFlag) return;
+  const current = dataset[index];
+  const qf = current.questionForm;
+
+  if (opt === qf.correct) {
+    qFormDone = true;
+    btn.classList.add("correct");
+    qOptions.querySelectorAll(".q-opt").forEach(b => b.disabled = true);
+
+    const gain = questionAttempts === 0 ? 100 : 50;
+    score += gain;
+    updateHud();
+
+    qFeedback.className = "q-feedback show good";
+    qFeedback.innerHTML =
+      `<strong>✓ Correct · +${gain} pts</strong> ${qf.explanations[opt]}` +
+      `<div class="structure-line q-struct reveal" style="margin-top:10px;">` +
+      `<span class="structure-label">Question structure</span>` +
+      `<span class="structure-formula">${qf.structure}</span>` +
+      `</div>`;
+
+    nextBtn.style.display = "inline-block";
+    nextBtn.textContent = index === dataset.length - 1 ? "Close the File ✔" : "Next Evidence ▶";
+    nextBtn.focus();
+
+  } else {
+    questionAttempts++;
+    lamps--;
+    updateHud();
+
+    btn.classList.add("wrong");
+    btn.disabled = true;
+
+    const why = qf.explanations[opt] || "Incorrect question form.";
+
+    qFeedback.className = "q-feedback show bad";
+    qFeedback.innerHTML = `<strong>✕ Incorrect · −1 lamp</strong><br>${why}`;
+
+    const panel = document.querySelector(".game-container");
+    panel.classList.add("shake");
+    setTimeout(() => panel.classList.remove("shake"), 420);
+
+    if (lamps <= 0) setTimeout(gameOver, 1200);
+  }
+}
+
+/* =================================================================
+   NEXT / END
+   ================================================================= */
+nextBtn.addEventListener("click", () => {
+  index++;
+  if (index < dataset.length) {
+    renderStage();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } else {
+    winGame();
+  }
+});
+
+/* =================================================================
+   ENDINGS
+   ================================================================= */
+function winGame() {
+  gameOverFlag = true;
+  gamePanel.style.display = "none";
+  endScreen.style.display = "block";
+
+  endKicker.textContent = "File Complete";
+  endTitle.textContent  = "All Evidence Logged";
+  rankText.textContent  = rankFor(score);
+  finalScoreEl.textContent = `${score} / ${dataset.length * 250}`;
+  tallyText.textContent =
+    `${score} points  ·  ${lamps} lamp${lamps === 1 ? "" : "s"} remaining  ·  ${dataset.length * 2} sub-tasks`;
+
+  if (score === dataset.length * 250) {
+    evalTextEl.textContent = "Perfect! You produced every verb phrase form and chose every correct question form.";
+  } else if (score >= dataset.length * 150) {
+    evalTextEl.textContent = "Good work, Detective. You correctly produced the majority of these complex forms.";
+  } else {
+    evalTextEl.textContent = "Keep practicing. The double past marking and passive continuous structures are tricky.";
+  }
+
+  restartBtn.textContent = "Reopen the File";
+  progFill.style.width = "100%";
+}
+
+function gameOver() {
+  gameOverFlag = true;
+  gamePanel.style.display = "none";
+  endScreen.style.display = "block";
+
+  endKicker.textContent = "File Cold";
+  endTitle.textContent  = "Out of Lamps";
+  rankText.textContent  = "INVESTIGATION SUSPENDED";
+  finalScoreEl.textContent = `${score} / ${dataset.length * 250}`;
+  tallyText.textContent = `${score} points  ·  0 lamps remaining`;
+  evalTextEl.textContent =
+    "Rebuild the four forms from their components — every lamp costs you a miss. Try again.";
+
+  restartBtn.textContent = "Relight & Retry";
+}
+
+restartBtn.addEventListener("click", () => {
+  index = 0;
+  score = 0;
+  lamps = MAX_LAMPS;
+  gameOverFlag = false;
+  endScreen.style.display = "none";
+  gamePanel.style.display = "block";
+  renderStage();
+});
+
+/* =================================================================
+   INIT
+   ================================================================= */
+stageTotalEl.textContent = dataset.length;
+renderStage();
+</script>
+
+</body>
+</html>
