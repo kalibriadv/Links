@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deduction Investigation Game</title>
+    <style>
+        :root {
+            --bg-dark: #121824;
+            --panel-bg: #1e2530;
+            --accent-blue: #38bdf8;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --correct-green: #22c55e;
+            --wrong-red: #ef4444;
+            --accent-gold: #fbbf24;
+            --ccq-bg: #0c141d;
+            --ccq-border: #24354a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            background: var(--panel-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            padding: 30px;
+            border: 1px solid #2e3748;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #2e3748;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stats {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .prompt-card {
+            background-color: #111827;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-blue);
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .target-phrase {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+            color: var(--accent-gold);
+            background: rgba(251, 191, 36, 0.1);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .options-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .btn-option {
+            background: #2d3748;
+            color: var(--text-main);
+            border: 1px solid #4a5568;
+            padding: 14px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 1rem;
+            transition: background 0.2s, border-color 0.2s;
+            line-height: 1.4;
+        }
+
+        .btn-option:hover:not(:disabled) {
+            background: #3a4659;
+            border-color: var(--accent-blue);
+        }
+
+        .btn-option:disabled {
+            cursor: default;
+        }
+
+        .btn-option.correct {
+            background: rgba(34, 197, 94, 0.2) !important;
+            border-color: var(--correct-green) !important;
+            color: #4ade80;
+            font-weight: 600;
+        }
+
+        .btn-option.wrong {
+            background: rgba(239, 68, 68, 0.2) !important;
+            border-color: var(--wrong-red) !important;
+            color: #f87171;
+        }
+
+        .feedback {
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            background: #111827;
+            border: 1px solid #2e3748;
+        }
+
+        .feedback-header {
+            font-size: 1.05rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #2e3748;
+        }
+
+        /* CCQ BOX — MATCHES BUILDER GRID STYLE */
+        .ccq-box {
+            background: var(--ccq-bg);
+            border: 1.5px solid var(--ccq-border);
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin-top: 15px;
+        }
+
+        .ccq-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.75rem;
+            font-weight: bold;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--accent-blue);
+            margin-bottom: 15px;
+        }
+
+        .ccq-item {
+            margin-bottom: 22px;
+        }
+
+        .ccq-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .ccq-question {
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            line-height: 1.5;
+        }
+
+        .ccq-options {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .ccq-btn {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            width: 100%;
+            text-align: left;
+            padding: 9px 12px;
+            background: #2d3748;
+            border: 1.5px solid #4a5568;
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 0.88rem;
+            line-height: 1.45;
+            transition: border-color 0.15s, background 0.15s, transform 0.12s;
+        }
+        .ccq-btn:hover:not(:disabled) {
+            border-color: var(--accent-blue);
+            background: #3a4659;
+            transform: translateX(3px);
+        }
+        .ccq-btn:disabled {
+            cursor: not-allowed;
+        }
+        .ccq-btn.correct {
+            border-color: var(--correct-green);
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+            font-weight: 600;
+            transform: translateX(3px);
+        }
+        .ccq-btn.wrong {
+            border-color: var(--wrong-red);
+            background: rgba(239, 68, 68, 0.1);
+            color: #fca5a5;
+            opacity: 0.6;
+        }
+
+        .ccq-feedback {
+            margin-top: 10px;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            line-height: 1.5;
+            display: none;
+        }
+        .ccq-feedback.show { display: block; }
+        .ccq-feedback.correct {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.4);
+            color: #4ade80;
+        }
+        .ccq-feedback.wrong {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+        }
+
+        .btn-action {
+            width: 100%;
+            background: var(--accent-blue);
+            color: #0f172a;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+            margin-top: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .btn-action:hover {
+            background: #7dd3fc;
+        }
+
+        .results-panel {
+            text-align: center;
+            display: none;
+        }
+
+        .score-num {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: var(--accent-gold);
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="game-panel">
+        <div class="header">
+            <div class="title">Meaning Clarification</div>
+            <div class="stats" id="stats-display">Clue: 1/7 | Score: 0</div>
+        </div>
+
+        <div class="prompt-card">
+            <span id="context-text"></span>
+            <span id="target-text" class="target-phrase"></span>
+        </div>
+
+        <div class="options-group" id="options-box"></div>
+        <div class="feedback" id="feedback-box"></div>
+        <button id="action-button" class="btn-action">Next Clue</button>
+    </div>
+
+    <div id="results-panel" class="results-panel">
+        <div class="title" style="margin-bottom: 10px;">Investigation Complete</div>
+        <p>You evaluated all available evidence scenarios.</p>
+        <div class="score-num" id="final-score">0 / 7</div>
+        <p id="evaluation-text" style="color: var(--text-muted); margin-bottom: 25px;"></p>
+        <button id="restart-button" class="btn-action" style="display: block;">Restart Case Review</button>
+    </div>
+</div>
+
+<script>
+    // Dataset with B2+ CCQs added
+    const dataset = [
+        {
+            context: "The tent was empty. The team's boots and sleeping bags were still there, but their footprints led away from the tent.",
+            target: "They must have fled.",
+            choices: [
+                { text: "a) They definitely stayed in the tent.", correct: false },
+                { text: "b) They almost certainly left quickly.", correct: true },
+                { text: "c) They may have stayed in the tent.", correct: false }
+            ],
+            reason: "'Must have' means you are almost certain something happened based on strong evidence.",
+            ccqs: [
+                {
+                    question: "Do we know this as an absolute fact, or is it a strong logical guess?",
+                    options: [
+                        { text: "It is a strong logical guess/deduction based on evidence.", correct: true },
+                        { text: "It is an absolute fact.", correct: false },
+                        { text: "It is a weak possibility.", correct: false }
+                    ],
+                    reason: "It is a strong logical guess/deduction based on evidence."
+                },
+                {
+                    question: "How sure is the speaker that they left? 50% or 95%?",
+                    options: [
+                        { text: "Around 95% / Almost certain.", correct: true },
+                        { text: "Around 50% / Maybe.", correct: false },
+                        { text: "Around 10% / Very unlikely.", correct: false }
+                    ],
+                    reason: "Around 95% / Almost certain."
+                }
+            ]
+        },
+        {
+            context: "The hikers were outside without warm clothes or boots in temperatures of -30°C for several days.",
+            target: "They can't have survived.",
+            choices: [
+                { text: "a) They probably survived.", correct: false },
+                { text: "b) It is almost impossible that they survived.", correct: true },
+                { text: "c) It is possible that they survived.", correct: false }
+            ],
+            reason: "'Can't have' shows you are almost completely sure a past event was impossible.",
+            ccqs: [
+                {
+                    question: "Does the speaker think there is a small chance they survived in -30°C?",
+                    options: [
+                        { text: "No, the speaker thinks it is effectively impossible.", correct: true },
+                        { text: "Yes, there is a small chance.", correct: false },
+                        { text: "The speaker is unsure.", correct: false }
+                    ],
+                    reason: "No, the speaker thinks it is effectively impossible."
+                },
+                {
+                    question: "Are we talking about their situation now, or what happened in the past?",
+                    options: [
+                        { text: "What happened in the past.", correct: true },
+                        { text: "Their situation now.", correct: false },
+                        { text: "A future possibility.", correct: false }
+                    ],
+                    reason: "What happened in the past."
+                }
+            ]
+        },
+        {
+            context: "Some footprints were found near a tall cedar tree. There were no footprints anywhere else.",
+            target: "They might have climbed the tree.",
+            choices: [
+                { text: "a) They definitely climbed the tree.", correct: false },
+                { text: "b) They definitely didn't climb the tree.", correct: false },
+                { text: "c) It is possible that they climbed the tree.", correct: true }
+            ],
+            reason: "'Might have' indicates a weak, open possibility about the past.",
+            ccqs: [
+                {
+                    question: "Is the investigator completely sure that they climbed the cedar tree?",
+                    options: [
+                        { text: "No, it is just a weak possibility.", correct: true },
+                        { text: "Yes, the investigator is completely sure.", correct: false },
+                        { text: "The investigator thinks it is impossible.", correct: false }
+                    ],
+                    reason: "No, it is just a weak possibility."
+                },
+                {
+                    question: "What is the percentage of certainty here? Around 30% or 90%?",
+                    options: [
+                        { text: "Around 30-50% / Low certainty.", correct: true },
+                        { text: "Around 90% / High certainty.", correct: false },
+                        { text: "Around 100% / Absolute certainty.", correct: false }
+                    ],
+                    reason: "Around 30-50% / Low certainty."
+                }
+            ]
+        },
+        {
+            context: "The tent was found with several large cuts. There were no signs of natural damage.",
+            target: "The tent must have been slashed.",
+            choices: [
+                { text: "a) The tent was almost certainly cut.", correct: true },
+                { text: "b) The tent may have been damaged naturally.", correct: false },
+                { text: "c) The tent definitely wasn't cut.", correct: false }
+            ],
+            reason: "'Must have been' shows high certainty based on clear physical evidence.",
+            ccqs: [
+                {
+                    question: "Did the tent tear on its own, or did someone/something cut it?",
+                    options: [
+                        { text: "Someone/something cut it (it is a passive action).", correct: true },
+                        { text: "The tent tore on its own.", correct: false },
+                        { text: "We don't know.", correct: false }
+                    ],
+                    reason: "Someone/something cut it (it is a passive action)."
+                },
+                {
+                    question: "Is the investigator guessing blindly, or is this based on clear physical evidence?",
+                    options: [
+                        { text: "It is based on clear physical evidence.", correct: true },
+                        { text: "The investigator is guessing blindly.", correct: false },
+                        { text: "There is no evidence.", correct: false }
+                    ],
+                    reason: "It is based on clear physical evidence."
+                }
+            ]
+        },
+        {
+            context: "Investigators found footprints following the hikers' route, but they could not identify who made them.",
+            target: "The group might have been tracked.",
+            choices: [
+                { text: "a) The group was definitely followed.", correct: false },
+                { text: "b) The group definitely wasn't followed.", correct: false },
+                { text: "c) It is possible that someone followed the group.", correct: true }
+            ],
+            reason: "'Might have been' introduces a possible scenario without absolute confirmation.",
+            ccqs: [
+                {
+                    question: "Did the hikers track someone, or did someone else follow the hikers?",
+                    options: [
+                        { text: "Someone else followed the hikers.", correct: true },
+                        { text: "The hikers tracked someone.", correct: false },
+                        { text: "No one was following anyone.", correct: false }
+                    ],
+                    reason: "Someone else followed the hikers."
+                },
+                {
+                    question: "Is this a confirmed fact or just one of many open options?",
+                    options: [
+                        { text: "Just one of the possible options.", correct: true },
+                        { text: "A confirmed fact.", correct: false },
+                        { text: "A proven impossibility.", correct: false }
+                    ],
+                    reason: "Just one of the possible options."
+                }
+            ]
+        },
+        {
+            context: "The hikers were found outside without proper clothes. Their clothes were covered with ice, and the temperature was -30°C.",
+            target: "They must have been freezing.",
+            choices: [
+                { text: "a) They were probably feeling very cold.", correct: false },
+                { text: "b) They were almost certainly feeling very cold.", correct: true },
+                { text: "c) They may not have felt cold.", correct: false }
+            ],
+            reason: "'Must have been + -ing' states a high-certainty deduction regarding a past continuous condition.",
+            ccqs: [
+                {
+                    question: "Does 'must have been freezing' describe a quick moment or a continuous state?",
+                    options: [
+                        { text: "A continuous state over a period of time.", correct: true },
+                        { text: "A quick moment.", correct: false },
+                        { text: "A future event.", correct: false }
+                    ],
+                    reason: "A continuous state over a period of time."
+                },
+                {
+                    question: "Is the speaker sure or unsure about how cold they felt?",
+                    options: [
+                        { text: "Almost 100% sure they were freezing.", correct: true },
+                        { text: "Unsure about how cold they felt.", correct: false },
+                        { text: "Certain they were not cold.", correct: false }
+                    ],
+                    reason: "Almost 100% sure they were freezing."
+                }
+            ]
+        },
+        {
+            context: "The hikers were found wearing only light clothes. Their warm jackets and boots were still inside the tent.",
+            target: "They can't have been wearing their winter clothes when they left.",
+            choices: [
+                { text: "a) They were probably wearing their winter clothes.", correct: false },
+                { text: "b) They may have been wearing their winter clothes.", correct: false },
+                { text: "c) It is almost impossible that they were wearing their winter clothes.", correct: true }
+            ],
+            reason: "'Can't have been + -ing' expresses a deduction that a past scenario was effectively impossible.",
+            ccqs: [
+                {
+                    question: "Is it possible that they had their winter jackets on when they ran out?",
+                    options: [
+                        { text: "No, it is almost impossible because the jackets were found inside.", correct: true },
+                        { text: "Yes, it is possible.", correct: false },
+                        { text: "We don't know.", correct: false }
+                    ],
+                    reason: "No, it is almost impossible because the jackets were found inside."
+                },
+                {
+                    question: "Focus on 'been wearing' — does this show a sudden action or a continuous state in the past?",
+                    options: [
+                        { text: "A continuous state.", correct: true },
+                        { text: "A sudden action.", correct: false },
+                        { text: "A future intention.", correct: false }
+                    ],
+                    reason: "A continuous state."
+                }
+            ]
+        }
+    ];
+
+    let index = 0;
+    let score = 0;
+
+    const contextEl = document.getElementById('context-text');
+    const targetEl = document.getElementById('target-text');
+    const optionsBox = document.getElementById('options-box');
+    const feedbackBox = document.getElementById('feedback-box');
+    const actionBtn = document.getElementById('action-button');
+    const statsEl = document.getElementById('stats-display');
+    const gamePanel = document.getElementById('game-panel');
+    const resultsPanel = document.getElementById('results-panel');
+    const finalScoreEl = document.getElementById('final-score');
+    const evalTextEl = document.getElementById('evaluation-text');
+    const restartBtn = document.getElementById('restart-button');
+
+    function initQuestion() {
+        feedbackBox.style.display = "none";
+        actionBtn.style.display = "none";
+        optionsBox.innerHTML = "";
+
+        const current = dataset[index];
+        statsEl.textContent = `Clue: ${index + 1}/${dataset.length} | Score: ${score}`;
+        contextEl.textContent = current.context;
+        targetEl.textContent = current.target;
+
+        current.choices.forEach((choice, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-option';
+            btn.textContent = choice.text;
+            btn.addEventListener('click', () => verifySelection(i, btn));
+            optionsBox.appendChild(btn);
+        });
+    }
+
+    function verifySelection(chosenIdx, clickedBtn) {
+        const current = dataset[index];
+        const allButtons = optionsBox.querySelectorAll('.btn-option');
+        
+        allButtons.forEach(btn => btn.disabled = true);
+
+        // Build CCQ Box HTML
+        let ccqHTML = `
+            <div class="ccq-box">
+                <div class="ccq-header">
+                    <span>❓</span> Answer the questions:
+                </div>
+        `;
+
+        current.ccqs.forEach((ccq, qIndex) => {
+            ccqHTML += `
+                <div class="ccq-item" data-qindex="${qIndex}">
+                    <div class="ccq-question">${qIndex + 1}. ${ccq.question}</div>
+                    <div class="ccq-options">
+            `;
+            ccq.options.forEach((opt, oIndex) => {
+                ccqHTML += `<button class="ccq-btn" data-qindex="${qIndex}" data-oindex="${oIndex}" data-correct="${opt.correct}">${opt.text}</button>`;
+            });
+            ccqHTML += `
+                    </div>
+                </div>
+            `;
+        });
+
+        ccqHTML += `</div>`;
+
+        if (current.choices[chosenIdx].correct) {
+            clickedBtn.classList.add('correct');
+            score++;
+            feedbackBox.style.borderColor = "var(--correct-green)";
+            feedbackBox.innerHTML = `<div class="feedback-header" style="color: var(--correct-green);">✅ Correct deduction!</div><p style="margin-bottom:15px;">${current.reason}</p>${ccqHTML}`;
+        } else {
+            clickedBtn.classList.add('wrong');
+            feedbackBox.style.borderColor = "var(--wrong-red)";
+            feedbackBox.innerHTML = `<div class="feedback-header" style="color: var(--wrong-red);">❌ Incorrect interpretation.</div><p style="margin-bottom:15px;">${current.reason}</p>${ccqHTML}`;
+            
+            current.choices.forEach((c, idx) => {
+                if (c.correct) {
+                    allButtons[idx].classList.add('correct');
+                }
+            });
+        }
+
+        // Add event listeners to the newly created CCQ buttons
+        const ccqButtons = feedbackBox.querySelectorAll('.ccq-btn');
+        let answeredCCQs = 0;
+
+        ccqButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const qIndex = this.getAttribute('data-qindex');
+                const itemContainer = this.closest('.ccq-item');
+                const allOptionsInThisQuestion = itemContainer.querySelectorAll('.ccq-btn');
+                
+                allOptionsInThisQuestion.forEach(b => b.disabled = true);
+
+                const isCorrect = this.getAttribute('data-correct') === 'true';
+                const currentCCQ = current.ccqs[qIndex];
+
+                if (isCorrect) {
+                    this.classList.add('correct');
+                } else {
+                    this.classList.add('wrong');
+                    allOptionsInThisQuestion.forEach(b => {
+                        if (b.getAttribute('data-correct') === 'true') {
+                            b.classList.add('correct');
+                        }
+                    });
+                }
+
+                // Add feedback message for this question
+                const feedbackMsg = document.createElement('div');
+                feedbackMsg.className = `ccq-feedback show ${isCorrect ? 'correct' : 'wrong'}`;
+                feedbackMsg.textContent = (isCorrect ? "✅ Correct! " : "❌ Incorrect. ") + currentCCQ.reason;
+                itemContainer.appendChild(feedbackMsg);
+
+                answeredCCQs++;
+
+                // Show the "Next Clue" button only after BOTH CCQs are answered
+                if (answeredCCQs === current.ccqs.length) {
+                    actionBtn.style.display = "block";
+                }
+            });
+        });
+
+        // Hide the action button initially until all CCQs are answered
+        actionBtn.style.display = "none";
+
+        statsEl.textContent = `Clue: ${index + 1}/${dataset.length} | Score: ${score}`;
+        feedbackBox.style.display = "block";
+    }
+
+    actionBtn.addEventListener('click', () => {
+        index++;
+        if (index < dataset.length) {
+            initQuestion();
+        } else {
+            gamePanel.style.display = "none";
+            resultsPanel.style.display = "block";
+            finalScoreEl.textContent = `${score} / ${dataset.length}`;
+            
+            if (score === dataset.length) {
+                evalTextEl.textContent = "Perfect! You accurately decoded every shade of certainty and modal logic.";
+            } else if (score >= 4) {
+                evalTextEl.textContent = "Good work. You correctly identified the majority of past modal meanings.";
+            } else {
+                evalTextEl.textContent = "Keep practicing to master the difference between certainties (must/can't) and possibilities (might).";
+            }
+        }
+    });
+
+    restartBtn.addEventListener('click', () => {
+        index = 0;
+        score = 0;
+        resultsPanel.style.display = "none";
+        gamePanel.style.display = "block";
+        initQuestion();
+    });
+
+    initQuestion();
+</script>
+
+</body>
+</html>

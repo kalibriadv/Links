@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dyatlov Pass: Meaning & Form Investigation</title>
+    <style>
+        :root {
+            --bg-dark: #121824;
+            --panel-bg: #1e2530;
+            --accent-blue: #38bdf8;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --correct-green: #22c55e;
+            --wrong-red: #ef4444;
+            --accent-gold: #fbbf24;
+            --timeline-bg: #e0f2fe;
+            --timeline-text: #0f172a;
+            --timeline-border: #bae6fd;
+            --meaning-bg: #dcfce7;
+            --meaning-text: #166534;
+            --ccq-bg: #0c141d;
+            --ccq-border: #24354a;
+            --evidence-bg: #0f1a24;
+            --evidence-border: #7fb2e5;
+            --evidence-text: #7dd3fc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--panel-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            padding: 30px;
+            border: 1px solid #2e3748;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #2e3748;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stats {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* EVIDENCE CARD — ICE BLUE */
+        .evidence-card {
+            background-color: var(--evidence-bg);
+            border: 2px solid var(--evidence-border);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 0 20px rgba(127, 178, 229, 0.15);
+            position: relative;
+        }
+
+        .evidence-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: var(--evidence-border);
+            color: #0a141f;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            margin-top: -35px;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+
+        .evidence-context {
+            font-size: 1.05rem;
+            line-height: 1.6;
+            color: var(--evidence-text);
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
+        .target-phrase {
+            display: block;
+            font-weight: bold;
+            color: var(--accent-gold);
+            background: #0a141d;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.15rem;
+            border: 1px dashed rgba(127, 178, 229, 0.4);
+            text-align: center;
+        }
+
+        .options-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .btn-option {
+            background: #2d3748;
+            color: var(--text-main);
+            border: 1px solid #4a5568;
+            padding: 14px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 1rem;
+            transition: background 0.2s, border-color 0.2s;
+            line-height: 1.4;
+        }
+
+        .btn-option:hover:not(:disabled) {
+            background: #3a4659;
+            border-color: var(--accent-blue);
+        }
+
+        .btn-option:disabled {
+            cursor: default;
+        }
+
+        .btn-option.correct {
+            background: rgba(34, 197, 94, 0.2) !important;
+            border-color: var(--correct-green) !important;
+            color: #4ade80;
+            font-weight: 600;
+        }
+
+        .btn-option.wrong {
+            background: rgba(239, 68, 68, 0.2) !important;
+            border-color: var(--wrong-red) !important;
+            color: #f87171;
+        }
+
+        .feedback {
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            background: #111827;
+            border: 1px solid #2e3748;
+        }
+
+        .feedback-header {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #2e3748;
+        }
+
+        /* TIMELINE STYLES */
+        .timeline-visual {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: var(--timeline-bg);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+            color: var(--timeline-text);
+            border: 1px solid var(--timeline-border);
+        }
+
+        .timeline-header-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1e3a8a;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .timeline-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            gap: 10px;
+        }
+
+        .step-card {
+            flex: 1;
+            background: white;
+            border-radius: 6px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        .step-card::after {
+            content: '→';
+            position: absolute;
+            right: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5rem;
+            color: #94a3b8;
+            font-weight: bold;
+        }
+
+        .step-card:last-child::after {
+            display: none;
+        }
+
+        .step-badge {
+            background: #1e3a8a;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .step-badge.badge-red { background: #dc2626; }
+        .step-badge.badge-green { background: #16a34a; }
+        .step-badge.badge-purple { background: #7c3aed; }
+        .step-badge.badge-gold { background: #d97706; }
+
+        .step-icon {
+            font-size: 2rem;
+            margin: 5px 0;
+            line-height: 1;
+        }
+
+        .step-text {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #334155;
+            line-height: 1.3;
+        }
+
+        .step-subtext {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        .timeline-axis {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            color: #64748b;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .timeline-axis-line {
+            flex-grow: 1;
+            height: 2px;
+            background: #94a3b8;
+            margin: 0 10px;
+            position: relative;
+        }
+
+        .timeline-axis-line::after {
+            content: '▶';
+            position: absolute;
+            right: -5px;
+            top: -7px;
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        /* MEANING BOX */
+        .meaning-box {
+            background: var(--meaning-bg);
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-top: 15px;
+            color: var(--meaning-text);
+            border: 1px solid #86efac;
+        }
+
+        .meaning-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #166534;
+        }
+
+        .meaning-content {
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        .meaning-content p {
+            margin-bottom: 10px;
+        }
+
+        .meaning-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .meaning-content .evidence-pt {
+            color: #14532d;
+            font-weight: 600;
+        }
+
+        .meaning-content .rejected-pt {
+            color: #991b1b;
+            font-weight: 600;
+        }
+
+        .meaning-content .conclusion-pt {
+            color: #166534;
+            font-weight: 700;
+        }
+
+        /* CCQ BOX */
+        .ccq-box {
+            background: var(--ccq-bg);
+            border: 1.5px solid var(--ccq-border);
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin-top: 15px;
+        }
+
+        .ccq-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.75rem;
+            font-weight: bold;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--accent-blue);
+            margin-bottom: 15px;
+        }
+
+        .ccq-item {
+            margin-bottom: 22px;
+        }
+
+        .ccq-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .ccq-question {
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            line-height: 1.5;
+        }
+
+        .ccq-options {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .ccq-btn {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            width: 100%;
+            text-align: left;
+            padding: 9px 12px;
+            background: #2d3748;
+            border: 1.5px solid #4a5568;
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 0.88rem;
+            line-height: 1.45;
+            transition: border-color 0.15s, background 0.15s, transform 0.12s;
+        }
+        .ccq-btn:hover:not(:disabled) {
+            border-color: var(--accent-blue);
+            background: #3a4659;
+            transform: translateX(3px);
+        }
+        .ccq-btn:disabled {
+            cursor: not-allowed;
+        }
+        .ccq-btn.correct {
+            border-color: var(--correct-green);
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+            font-weight: 600;
+            transform: translateX(3px);
+        }
+        .ccq-btn.wrong {
+            border-color: var(--wrong-red);
+            background: rgba(239, 68, 68, 0.1);
+            color: #fca5a5;
+            opacity: 0.6;
+        }
+
+        .ccq-feedback {
+            margin-top: 10px;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            line-height: 1.5;
+            display: none;
+        }
+        .ccq-feedback.show { display: block; }
+        .ccq-feedback.correct {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.4);
+            color: #4ade80;
+        }
+        .ccq-feedback.wrong {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+        }
+
+        .btn-action {
+            width: 100%;
+            background: var(--accent-blue);
+            color: #0f172a;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+            margin-top: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .btn-action:hover {
+            background: #7dd3fc;
+        }
+
+        .results-panel {
+            text-align: center;
+            display: none;
+        }
+
+        .score-num {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: var(--accent-gold);
+            margin: 15px 0;
+        }
+
+        @media (max-width: 700px) {
+            .timeline-steps {
+                flex-direction: column;
+            }
+            .step-card::after {
+                content: '↓';
+                right: 50%;
+                top: auto;
+                bottom: -15px;
+                transform: translateX(50%);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="game-panel">
+        <div class="header">
+            <div class="title">Case File: Dyatlov Pass</div>
+            <div class="stats" id="stats-display">Evidence: 1/6 | Score: 0</div>
+        </div>
+
+        <!-- EVIDENCE CARD — ICE BLUE -->
+        <div class="evidence-card">
+            <div class="evidence-header">🔍 Evidence</div>
+            <div class="evidence-context" id="context-text"></div>
+            <div class="target-phrase" id="target-text"></div>
+        </div>
+
+        <div class="options-group" id="options-box"></div>
+        <div class="feedback" id="feedback-box"></div>
+        <button id="action-button" class="btn-action">Next Evidence</button>
+    </div>
+
+    <div id="results-panel" class="results-panel">
+        <div class="title" style="margin-bottom: 10px;">Investigation Complete</div>
+        <p>You evaluated all available evidence scenarios.</p>
+        <div class="score-num" id="final-score">0 / 6</div>
+        <p id="evaluation-text" style="color: var(--text-muted); margin-bottom: 25px;"></p>
+        <button id="restart-button" class="btn-action" style="display: block;">Restart Case Review</button>
+    </div>
+</div>
+
+<script>
+    // Dataset with CORRECTED timeline order and MORE EXPLICIT meaning
+    const dataset = [
+        {
+            context: "The slope was too gentle, and the tent was found still standing.",
+            target: "They can't have had to have abandoned the tent because of an avalanche.",
+            choices: [
+                { text: "a) I am almost certain that they did not have to abandon the tent because of an avalanche.", correct: true },
+                { text: "b) They definitely abandoned the tent because of an avalanche.", correct: false },
+                { text: "c) They might have been forced to leave the tent by an avalanche.", correct: false }
+            ],
+            // CORRECTED TIMELINE: Evidence first, then rejected hypothesis, then conclusion
+            timeline: [
+                { badge: "1. OBSERVED FACT", badgeClass: "badge-green", icon: "⛺", text: "The tent was found still standing.", subtext: "This is what we know" },
+                { badge: "2. REJECTED THEORY", badgeClass: "badge-red", icon: "❌🌨️", text: "Could an avalanche have forced them out?", subtext: "The slope was too gentle" },
+                { badge: "3. NEGATIVE DEDUCTION", badgeClass: "badge-red", icon: "🚫", text: "They can't have had to have abandoned the tent.", subtext: "The obligation never existed" },
+                { badge: "4. CONCLUSION", badgeClass: "badge-green", icon: "✅", text: "The avalanche theory is ruled out.", subtext: "The tent survived intact" }
+            ],
+            // MORE EXPLICIT MEANING
+            reason: `
+                <p><span class="evidence-pt">The evidence:</span> The tent was found still standing, and the slope was too gentle for an avalanche.</p>
+                <p><span class="rejected-pt">The rejected hypothesis:</span> The speaker considers whether an avalanche forced the hikers to abandon the tent — and rules it out as impossible.</p>
+                <p><span class="conclusion-pt">The conclusion:</span> It is not possible that the hikers were obliged to leave the tent because of an avalanche.</p>
+            `,
+            ccqs: [
+                {
+                    question: "Are we certain that they were forced by an avalanche to leave the tent?",
+                    options: [
+                        { text: "Yes, we are certain they were forced.", correct: false },
+                        { text: "No, we are almost 100% sure they were not forced (because the slope was too gentle).", correct: true },
+                        { text: "We don't know, it's a possibility.", correct: false }
+                    ],
+                    reason: "'Can't have' expresses a strong negative deduction. The evidence (gentle slope) makes it almost impossible."
+                },
+                {
+                    question: "Does 'had to' mean they had a choice or they had no choice?",
+                    options: [
+                        { text: "It means they had a choice.", correct: false },
+                        { text: "It means obligation/no choice, but 'can't have had to' means we think this obligation never existed.", correct: true },
+                        { text: "It means they wanted to leave.", correct: false }
+                    ],
+                    reason: "'Had to' indicates past obligation/no choice. The negative deduction 'can't have had to' means the speaker believes this obligation did not exist."
+                }
+            ]
+        },
+        {
+            context: "The search team found only nine pairs of footprints leading away from the tent.",
+            target: "They can't have been being followed down the slope.",
+            choices: [
+                { text: "a) It is almost impossible that someone was following them down the slope.", correct: true },
+                { text: "b) They definitely were not following anyone down the slope.", correct: false },
+                { text: "c) Someone might have been following them down the slope.", correct: false }
+            ],
+            timeline: [
+                { badge: "1. OBSERVED FACT", badgeClass: "badge-green", icon: "👣", text: "Only nine pairs of footprints were found.", subtext: "This is what we know" },
+                { badge: "2. REJECTED THEORY", badgeClass: "badge-red", icon: "❌🔍", text: "Could someone have been following them?", subtext: "No second set of tracks" },
+                { badge: "3. NEGATIVE DEDUCTION", badgeClass: "badge-red", icon: "🚫", text: "They can't have been being followed.", subtext: "Passive denial" },
+                { badge: "4. CONCLUSION", badgeClass: "badge-green", icon: "✅", text: "No one was tracking them.", subtext: "The evidence rules it out" }
+            ],
+            reason: `
+                <p><span class="evidence-pt">The evidence:</span> Only nine pairs of footprints were found leading away from the tent — exactly the number of hikers.</p>
+                <p><span class="rejected-pt">The rejected hypothesis:</span> The speaker considers whether someone was following them down the slope — and rules it out as impossible.</p>
+                <p><span class="conclusion-pt">The conclusion:</span> It is not possible that they were being followed down the slope.</p>
+            `,
+            ccqs: [
+                {
+                    question: "Did anyone follow them down the slope, according to the speaker?",
+                    options: [
+                        { text: "Yes, someone definitely followed them.", correct: false },
+                        { text: "No, the speaker is almost 100% sure nobody did.", correct: true },
+                        { text: "Maybe, the speaker is unsure.", correct: false }
+                    ],
+                    reason: "'Can't have' expresses a strong negative deduction. The lack of footprints makes following almost impossible."
+                },
+                {
+                    question: "Was this hypothetical following a one-time quick event or a continuous process?",
+                    options: [
+                        { text: "A one-time quick event.", correct: false },
+                        { text: "A continuous process (been being followed).", correct: true },
+                        { text: "A future event.", correct: false }
+                    ],
+                    reason: "'Been being + past participle' is the perfect continuous passive. It describes an ongoing, continuous action in the past."
+                }
+            ]
+        },
+        {
+            context: "The normal entrance was blocked, jammed, or unusable.",
+            target: "They must have had to have cut through the tent from the inside.",
+            choices: [
+                { text: "a) They probably cut the tent just for fun.", correct: false },
+                { text: "b) They might have been required to cut the tent.", correct: false },
+                { text: "c) It is certain that they were required to cut the tent to get out.", correct: true }
+            ],
+            timeline: [
+                { badge: "1. OBSERVED FACT", badgeClass: "badge-green", icon: "🚫⛺", text: "The tent entrance was blocked or jammed.", subtext: "This is what we know" },
+                { badge: "2. NECESSARY ACTION", badgeClass: "badge-gold", icon: "⚠️", text: "They needed to get out urgently.", subtext: "The door was unusable" },
+                { badge: "3. POSITIVE DEDUCTION", badgeClass: "badge-green", icon: "✂️", text: "They must have had to cut through the tent.", subtext: "Obligation was certain" },
+                { badge: "4. CONCLUSION", badgeClass: "badge-green", icon: "✅", text: "It is certain they were required to cut it.", subtext: "Logical deduction" }
+            ],
+            reason: `
+                <p><span class="evidence-pt">The evidence:</span> The normal entrance was blocked, jammed, or unusable.</p>
+                <p><span class="rejected-pt">The rejected hypothesis:</span> The speaker considers whether they chose to cut the tent for fun — and rules it out.</p>
+                <p><span class="conclusion-pt">The conclusion:</span> It is certain that they were required to cut through the tent because they had no other option.</p>
+            `,
+            ccqs: [
+                {
+                    question: "Does the speaker feel certain or uncertain that cutting the tent was absolutely necessary?",
+                    options: [
+                        { text: "Uncertain (might have).", correct: false },
+                        { text: "Certain (must have).", correct: true },
+                        { text: "Impossible (can't have).", correct: false }
+                    ],
+                    reason: "'Must have' expresses a strong, positive deduction based on clear evidence (the blocked entrance)."
+                },
+                {
+                    question: "Did the person choose to cut it just for fun, or did they have no other option?",
+                    options: [
+                        { text: "They chose to cut it for fun.", correct: false },
+                        { text: "They had no other option (had to), because the entrance was blocked.", correct: true },
+                        { text: "It was completely optional.", correct: false }
+                    ],
+                    reason: "'Had to' indicates obligation/no choice. The blocked entrance forced them to cut the tent."
+                }
+            ]
+        },
+        {
+            context: "They ran into -30°C half-dressed.",
+            target: "They must have been being driven out by something they believed was inside the tent.",
+            choices: [
+                { text: "a) It is certain that they were in the process of being forced out by a perceived threat inside the tent.", correct: true },
+                { text: "b) They might have been forced out by something inside the tent.", correct: false },
+                { text: "c) It is impossible that they were driven out by something inside the tent.", correct: false }
+            ],
+            timeline: [
+                { badge: "1. OBSERVED FACT", badgeClass: "badge-green", icon: "❄️", text: "They ran into -30°C half-dressed.", subtext: "This is what we know" },
+                { badge: "2. LOGICAL IMPLICATION", badgeClass: "badge-gold", icon: "⚠️", text: "They must have been fleeing something.", subtext: "No one would do this voluntarily" },
+                { badge: "3. POSITIVE DEDUCTION", badgeClass: "badge-green", icon: "🏃", text: "They must have been being driven out.", subtext: "Passive continuous" },
+                { badge: "4. CONCLUSION", badgeClass: "badge-green", icon: "✅", text: "Something inside the tent terrified them.", subtext: "Extreme reaction confirms fear" }
+            ],
+            reason: `
+                <p><span class="evidence-pt">The evidence:</span> They ran into -30°C half-dressed, without proper clothing.</p>
+                <p><span class="rejected-pt">The rejected hypothesis:</span> The speaker rules out the idea that this was a voluntary choice — no one would do this willingly.</p>
+                <p><span class="conclusion-pt">The conclusion:</span> It is certain that something inside the tent was actively driving them out, causing them to flee in terror.</p>
+            `,
+            ccqs: [
+                {
+                    question: "Were the hikers driving something out, or was something driving them out?",
+                    options: [
+                        { text: "The hikers were driving something out.", correct: false },
+                        { text: "Something was driving them out (it's a passive structure).", correct: true },
+                        { text: "No one was driving anyone.", correct: false }
+                    ],
+                    reason: "The passive voice ('been being driven') means the subject (they) receives the action. Something else was performing the action of driving them out."
+                },
+                {
+                    question: "Did this expulsion happen in one second, or was it an ongoing, terrifying process at that moment?",
+                    options: [
+                        { text: "It happened in one second.", correct: false },
+                        { text: "It was an ongoing process (been being driven out).", correct: true },
+                        { text: "It hasn't happened yet.", correct: false }
+                    ],
+                    reason: "The continuous passive ('been being driven out') emphasizes the ongoing, in-progress nature of the action."
+                }
+            ]
+        },
+        {
+            context: "There were signs they wanted to escape something on the ground rather than simply look for the tent.",
+            target: "They might have had to have climbed the cedar tree to escape something on the ground.",
+            choices: [
+                { text: "a) They definitely climbed the tree to escape.", correct: false },
+                { text: "b) It is possible that they were required to climb the tree to escape something.", correct: true },
+                { text: "c) They definitely did not need to climb the tree.", correct: false }
+            ],
+            timeline: [
+                { badge: "1. OBSERVED FACT", badgeClass: "badge-green", icon: "🌿", text: "Branches broke up to 5 metres high.", subtext: "This is what we know" },
+                { badge: "2. POSSIBLE THEORY", badgeClass: "badge-gold", icon: "🌲", text: "Could they have climbed to escape something?", subtext: "Signs point to climbing" },
+                { badge: "3. POSSIBILITY DEDUCTION", badgeClass: "badge-gold", icon: "❓", text: "They might have had to have climbed.", subtext: "Possibility of obligation" },
+                { badge: "4. CONCLUSION", badgeClass: "badge-green", icon: "✅", text: "It is possible they were forced to climb.", subtext: "One of several theories" }
+            ],
+            reason: `
+                <p><span class="evidence-pt">The evidence:</span> Branches were broken up to five metres high, suggesting someone climbed the cedar tree.</p>
+                <p><span class="possible-pt">The possible theory:</span> The speaker considers whether they were required to climb the tree to escape something on the ground.</p>
+                <p><span class="conclusion-pt">The conclusion:</span> It is possible that they were forced to climb the tree to escape a threat below.</p>
+            `,
+            ccqs: [
+                {
+                    question: "Is the speaker 100% sure they were forced to climb the tree to escape?",
+                    options: [
+                        { text: "Yes, 100% sure (must have).", correct: false },
+                        { text: "No, it's just a possibility/guess (might have).", correct: true },
+                        { text: "No, they are sure it didn't happen (can't have).", correct: false }
+                    ],
+                    reason: "'Might have' introduces a possibility, unlike 'must have' (certainty) or 'can't have' (impossibility)."
+                },
+                {
+                    question: "If this theory is true, did they climb it voluntarily or because they had no choice?",
+                    options: [
+                        { text: "Voluntarily, for fun.", correct: false },
+                        { text: "Because they had no choice / they were forced (had to).", correct: true },
+                        { text: "It was completely optional.", correct: false }
+                    ],
+                    reason: "'Had to' indicates obligation/no choice. If the theory is true, they were forced by the threat on the ground."
+                }
+            ]
+        },
+        {
+            context: "Someone climbed the cedar and broke branches up to five metres high.",
+            target: "They might have been being observed from the treeline.",
+            choices: [
+                { text: "a) They definitely observed someone from the treeline.", correct: false },
+                { text: "b) It is impossible that they were being observed.", correct: false },
+                { text: "c) It is possible that they were in the process of being observed from the treeline.", correct: true }
+            ],
+            timeline: [
+                { badge: "1. OBSERVED FACT", badgeClass: "badge-green", icon: "🪵", text: "Branches broke up to 5m high.", subtext: "This is what we know" },
+                { badge: "2. POSSIBLE THEORY", badgeClass: "badge-gold", icon: "👁️", text: "Could they have been watched from the treeline?", subtext: "Someone climbed the tree" },
+                { badge: "3. POSSIBILITY DEDUCTION", badgeClass: "badge-gold", icon: "❓", text: "They might have been being observed.", subtext: "Passive continuous possibility" },
+                { badge: "4. CONCLUSION", badgeClass: "badge-green", icon: "✅", text: "Being watched is a possible explanation.", subtext: "One of several theories" }
+            ],
+            reason: `
+                <p><span class="evidence-pt">The evidence:</span> Someone climbed the cedar and broke branches up to five metres high.</p>
+                <p><span class="possible-pt">The possible theory:</span> The speaker considers whether someone was watching them from the treeline — a possible explanation for the climbing.</p>
+                <p><span class="conclusion-pt">The conclusion:</span> It is possible that they were in the process of being observed from the treeline.</p>
+            `,
+            ccqs: [
+                {
+                    question: "Is it a proven fact that someone was watching them?",
+                    options: [
+                        { text: "Yes, it's a proven fact.", correct: false },
+                        { text: "No, it is just one of the possible theories (might have).", correct: true },
+                        { text: "No, it's impossible (can't have).", correct: false }
+                    ],
+                    reason: "'Might have' indicates possibility, not a proven fact. It's one of several possible explanations."
+                },
+                {
+                    question: "Focus on 'been being observed': does this mean someone watched them for a period of time, or just glanced at them once?",
+                    options: [
+                        { text: "Just glanced at them once.", correct: false },
+                        { text: "Form indicates a continuous process (they were being watched over a period of time).", correct: true },
+                        { text: "It means they were doing the observing.", correct: false }
+                    ],
+                    reason: "The continuous passive ('been being observed') shows the action was in progress over a period of time, not just a single glance."
+                }
+            ]
+        }
+    ];
+
+    let index = 0;
+    let score = 0;
+
+    const contextEl = document.getElementById('context-text');
+    const targetEl = document.getElementById('target-text');
+    const optionsBox = document.getElementById('options-box');
+    const feedbackBox = document.getElementById('feedback-box');
+    const actionBtn = document.getElementById('action-button');
+    const statsEl = document.getElementById('stats-display');
+    const gamePanel = document.getElementById('game-panel');
+    const resultsPanel = document.getElementById('results-panel');
+    const finalScoreEl = document.getElementById('final-score');
+    const evalTextEl = document.getElementById('evaluation-text');
+    const restartBtn = document.getElementById('restart-button');
+
+    function initQuestion() {
+        feedbackBox.style.display = "none";
+        actionBtn.style.display = "none";
+        optionsBox.innerHTML = "";
+
+        const current = dataset[index];
+        statsEl.textContent = `Evidence: ${index + 1}/${dataset.length} | Score: ${score}`;
+        contextEl.textContent = current.context;
+        targetEl.textContent = current.target;
+
+        current.choices.forEach((choice, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-option';
+            btn.textContent = choice.text;
+            btn.addEventListener('click', () => verifySelection(i, btn));
+            optionsBox.appendChild(btn);
+        });
+    }
+
+    function verifySelection(chosenIdx, clickedBtn) {
+        const current = dataset[index];
+        const allButtons = optionsBox.querySelectorAll('.btn-option');
+        
+        // Disable all buttons after selection
+        allButtons.forEach(btn => btn.disabled = true);
+
+        // Build Timeline HTML
+        let timelineHTML = `
+            <div class="timeline-visual">
+                <div class="timeline-header-title">Timeline of Logic</div>
+                <div class="timeline-steps">
+        `;
+
+        current.timeline.forEach(point => {
+            timelineHTML += `
+                <div class="step-card">
+                    <div class="step-badge ${point.badgeClass}">${point.badge}</div>
+                    <div class="step-icon">${point.icon}</div>
+                    <div class="step-text">${point.text}</div>
+                    <div class="step-subtext">${point.subtext}</div>
+                </div>
+            `;
+        });
+
+        timelineHTML += `
+                </div>
+                <div class="timeline-axis">
+                    <span>Time</span>
+                    <div class="timeline-axis-line"></div>
+                </div>
+            </div>
+        `;
+
+        // Build Meaning Box HTML (Now more explicit)
+        let meaningHTML = `
+            <div class="meaning-box">
+                <div class="meaning-header">
+                    <span>💡</span> Meaning
+                </div>
+                <div class="meaning-content">
+                    ${current.reason}
+                </div>
+            </div>
+        `;
+
+        // Build CCQ Box HTML
+        let ccqHTML = `
+            <div class="ccq-box">
+                <div class="ccq-header">
+                    <span>❓</span> Answer the questions:
+                </div>
+        `;
+
+        current.ccqs.forEach((ccq, qIndex) => {
+            ccqHTML += `
+                <div class="ccq-item" data-qindex="${qIndex}">
+                    <div class="ccq-question">${qIndex + 1}. ${ccq.question}</div>
+                    <div class="ccq-options">
+            `;
+            ccq.options.forEach((opt, oIndex) => {
+                ccqHTML += `<button class="ccq-btn" data-qindex="${qIndex}" data-oindex="${oIndex}" data-correct="${opt.correct}">${opt.text}</button>`;
+            });
+            ccqHTML += `
+                    </div>
+                </div>
+            `;
+        });
+
+        ccqHTML += `</div>`;
+
+        const fullFeedbackHTML = timelineHTML + meaningHTML + ccqHTML;
+
+        if (current.choices[chosenIdx].correct) {
+            clickedBtn.classList.add('correct');
+            score++;
+            feedbackBox.style.borderColor = "var(--correct-green)";
+            feedbackBox.innerHTML = `<div class="feedback-header" style="color: var(--correct-green);">✅ Correct deduction!</div>${fullFeedbackHTML}`;
+        } else {
+            clickedBtn.classList.add('wrong');
+            feedbackBox.style.borderColor = "var(--wrong-red)";
+            feedbackBox.innerHTML = `<div class="feedback-header" style="color: var(--wrong-red);">❌ Incorrect interpretation.</div>${fullFeedbackHTML}`;
+            
+            // Highlight the correct answer
+            current.choices.forEach((c, idx) => {
+                if (c.correct) {
+                    allButtons[idx].classList.add('correct');
+                }
+            });
+        }
+
+        // Add event listeners to the newly created CCQ buttons
+        const ccqButtons = feedbackBox.querySelectorAll('.ccq-btn');
+        let answeredCCQs = 0;
+
+        ccqButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const qIndex = this.getAttribute('data-qindex');
+                const itemContainer = this.closest('.ccq-item');
+                const allOptionsInThisQuestion = itemContainer.querySelectorAll('.ccq-btn');
+                
+                // Disable all options in THIS question only
+                allOptionsInThisQuestion.forEach(b => b.disabled = true);
+
+                const isCorrect = this.getAttribute('data-correct') === 'true';
+                const currentCCQ = current.ccqs[qIndex];
+
+                if (isCorrect) {
+                    this.classList.add('correct');
+                } else {
+                    this.classList.add('wrong');
+                    // Highlight the correct answer
+                    allOptionsInThisQuestion.forEach(b => {
+                        if (b.getAttribute('data-correct') === 'true') {
+                            b.classList.add('correct');
+                        }
+                    });
+                }
+
+                // Add feedback message for this question
+                const feedbackMsg = document.createElement('div');
+                feedbackMsg.className = `ccq-feedback show ${isCorrect ? 'correct' : 'wrong'}`;
+                feedbackMsg.textContent = (isCorrect ? "✅ Correct! " : "❌ Incorrect. ") + currentCCQ.reason;
+                itemContainer.appendChild(feedbackMsg);
+
+                answeredCCQs++;
+
+                // Show the "Next Evidence" button only after BOTH CCQs are answered
+                if (answeredCCQs === current.ccqs.length) {
+                    actionBtn.style.display = "block";
+                }
+            });
+        });
+
+        // Hide the action button initially until all CCQs are answered
+        actionBtn.style.display = "none";
+
+        statsEl.textContent = `Evidence: ${index + 1}/${dataset.length} | Score: ${score}`;
+        feedbackBox.style.display = "block";
+    }
+
+    actionBtn.addEventListener('click', () => {
+        index++;
+        if (index < dataset.length) {
+            initQuestion();
+        } else {
+            gamePanel.style.display = "none";
+            resultsPanel.style.display = "block";
+            finalScoreEl.textContent = `${score} / ${dataset.length}`;
+            
+            if (score === dataset.length) {
+                evalTextEl.textContent = "Perfect! You accurately decoded every shade of certainty, obligation, and modal logic.";
+            } else if (score >= 4) {
+                evalTextEl.textContent = "Good work, Detective. You correctly identified the majority of these complex past modal meanings.";
+            } else {
+                evalTextEl.textContent = "Keep practicing. The double past marking and passive continuous structures are tricky.";
+            }
+        }
+    });
+
+    restartBtn.addEventListener('click', () => {
+        index = 0;
+        score = 0;
+        resultsPanel.style.display = "none";
+        gamePanel.style.display = "block";
+        initQuestion();
+    });
+
+    // Start the game
+    initQuestion();
+</script>
+
+</body>
+</html>
